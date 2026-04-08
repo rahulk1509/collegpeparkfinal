@@ -128,6 +128,11 @@ def log_step(step: int, action: str, reward: float, done: bool, error: Optional[
 
 
 def log_end(success: bool, steps: int, score: float, rewards: List[float]) -> None:
+    # Ensure score is strictly in (0, 1) - never exactly 0 or 1
+    if score <= 0.0:
+        score = 0.01
+    elif score >= 1.0:
+        score = 0.99
     rewards_str = ",".join(f"{r:.2f}" for r in rewards)
     print(f"[END] success={str(success).lower()} steps={steps} score={score:.2f} rewards={rewards_str}", flush=True)
 
@@ -270,8 +275,9 @@ async def run_task(client: OpenAI, env: CollegeParkEnv, task_id: str, seed: int)
                 break
 
         # Calculate score - must be strictly in (0, 1) open interval
-        SCORE_MIN = 0.001
-        SCORE_MAX = 0.999
+        # Using 0.01/0.99 so 2 decimal formatting doesn't round to 0.00/1.00
+        SCORE_MIN = 0.01
+        SCORE_MAX = 0.99
         
         reshuffles = obs.get("reshuffles_so_far", 0)
         departures = obs.get("departed_count", 0)
@@ -285,7 +291,10 @@ async def run_task(client: OpenAI, env: CollegeParkEnv, task_id: str, seed: int)
             score = SCORE_MAX if reshuffles == 0 else 0.5
         
         # Clamp to strictly (0, 1)
-        score = max(SCORE_MIN, min(SCORE_MAX, score))
+        if score <= 0.0:
+            score = SCORE_MIN
+        elif score >= 1.0:
+            score = SCORE_MAX
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     finally:

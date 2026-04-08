@@ -15,14 +15,19 @@ NOTE: Scores must be strictly between 0 and 1 (exclusive), i.e., in (0, 1).
 
 from typing import Dict, Any
 
-# Epsilon to ensure scores are strictly in (0, 1) open interval
-SCORE_MIN = 0.001
-SCORE_MAX = 0.999
+# Bounds to ensure scores are strictly in (0, 1) open interval
+# Using 0.01 and 0.99 so that 2 decimal formatting doesn't round to 0.00 or 1.00
+SCORE_MIN = 0.01
+SCORE_MAX = 0.99
 
 
 def _clamp_score(score: float) -> float:
     """Clamp score to strictly (0, 1) open interval."""
-    return round(max(SCORE_MIN, min(SCORE_MAX, score)), 4)
+    if score <= 0.0:
+        return SCORE_MIN
+    elif score >= 1.0:
+        return SCORE_MAX
+    return round(score, 4)
 
 
 def grade_easy(reshuffles: int, departures: int) -> float:
