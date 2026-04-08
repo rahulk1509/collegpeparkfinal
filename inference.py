@@ -22,14 +22,19 @@ import json
 import os
 import textwrap
 from typing import Dict, Any, List, Optional
+from dataclasses import dataclass
 
+import requests
 from openai import OpenAI
+
+from models import CollegeParkAction, CollegeParkObservation
 
 # Environment configuration
 IMAGE_NAME = os.getenv("IMAGE_NAME")
 API_KEY = os.getenv("HF_TOKEN") or os.getenv("API_KEY")
 API_BASE_URL = os.getenv("API_BASE_URL") or "https://router.huggingface.co/v1"
 MODEL_NAME = os.getenv("MODEL_NAME") or "meta-llama/Llama-3.1-8B-Instruct"
+ENV_URL = os.getenv("ENV_URL") or "http://localhost:7860"
 BENCHMARK = "collegpark"
 MAX_STEPS = 100
 TEMPERATURE = 0.1
@@ -52,6 +57,61 @@ SYSTEM_PROMPT = textwrap.dedent("""
     Always choose from the vehicles in the queue.
     Choose an empty slot (shown as ____).
 """).strip()
+
+
+@dataclass
+class EnvResult:
+    """Result from environment reset/step."""
+    observation: Dict[str, Any]
+    reward: float
+    done: bool
+
+
+class CollegeParkEnv:
+    """Async wrapper for CollegePark environment HTTP client."""
+    
+    def __init__(self, base_url: str):
+        self.base_url = base_url.rstrip("/")
+    
+    @classmethod
+    async def from_docker_image(cls, image_name: Optional[str] = None) -> "CollegeParkEnv":
+        """Create environment client (connects to running Docker container)."""
+        base_url = os.getenv("ENV_URL") or "http://localhost:7860"
+        return cls(base_url)
+    
+    async def reset(self, task_id: str = "easy", seed: int = 42) -> EnvResult:
+        """Reset environment."""
+        response = requests.post(
+            f"{self.base_url}/reset",
+            json={"task_id": task_id, "seed": seed},
+            timeout=30
+        )
+        response.raise_for_status()
+        data = response.json()
+        return EnvResult(
+            observation=data.get("observation", {}),
+            reward=data.get("reward", 0.0),
+            done=data.get("done", False)
+        )
+    
+    async def step(self, action: CollegeParkAction) -> EnvResult:
+        """Execute action."""
+        response = requests.post(
+            f"{self.base_url}/step",
+            json={"vehicle_id": action.vehicle_id, "row": action.row, "slot": action.slot},
+            timeout=30
+        )
+        response.raise_for_status()
+        data = response.json()
+        return EnvResult(
+            observation=data.get("observation", {}),
+            reward=data.get("reward", 0.0),
+            done=data.get("done", False)
+        )
+    
+    async def close(self) -> None:
+        """Cleanup (no-op for HTTP client)."""
+        pass
 
 
 def log_start(task: str, env: str, model: str) -> None:
@@ -144,7 +204,7 @@ def get_model_action(client: OpenAI, step: int, obs: Dict[str, Any]) -> Optional
                     "slot": int(action["slot"])
                 }
     except Exception as exc:
-        print(f"[DEBUG] Model request failed: {exc}", flush=True)
+        pass  # Fall through to heuristic
     
     # Fallback: use heuristic
     queue = obs.get("queue", [])
@@ -163,7 +223,7 @@ def get_model_action(client: OpenAI, step: int, obs: Dict[str, Any]) -> Optional
     return None
 
 
-async def run_task(client: OpenAI, env, task_id: str, seed: int) -> Dict[str, Any]:
+async def run_task(client: OpenAI, env: CollegeParkEnv, task_id: str, seed: int) -> Dict[str, Any]:
     """Run a single task episode."""
     rewards: List[float] = []
     steps_taken = 0
@@ -175,13 +235,8 @@ async def run_task(client: OpenAI, env, task_id: str, seed: int) -> Dict[str, An
     try:
         # Reset environment
         result = await env.reset(task_id=task_id, seed=seed)
-        obs = result.observation if hasattr(result, 'observation') else result.get('observation', {})
-        if hasattr(obs, 'model_dump'):
-            obs = obs.model_dump()
-        elif hasattr(obs, '__dict__'):
-            obs = vars(obs)
-        
-        done = result.done if hasattr(result, 'done') else result.get('done', False)
+        obs = result.observation
+        done = result.done
 
         for step in range(1, MAX_STEPS + 1):
             if done:
@@ -191,30 +246,24 @@ async def run_task(client: OpenAI, env, task_id: str, seed: int) -> Dict[str, An
             if not queue:
                 break
 
-            action = get_model_action(client, step, obs)
-            if action is None:
+            action_dict = get_model_action(client, step, obs)
+            if action_dict is None:
                 log_step(step=step, action="null", reward=0.0, done=False, error="Could not parse action")
                 break
 
             # Execute action
-            from models import CollegeParkAction
-            action_obj = CollegeParkAction(**action)
-            result = await env.step(action_obj)
+            action = CollegeParkAction(**action_dict)
+            result = await env.step(action)
             
-            obs = result.observation if hasattr(result, 'observation') else result.get('observation', {})
-            if hasattr(obs, 'model_dump'):
-                obs = obs.model_dump()
-            elif hasattr(obs, '__dict__'):
-                obs = vars(obs)
-            
-            reward = result.reward if hasattr(result, 'reward') else result.get('reward', 0.0)
-            done = result.done if hasattr(result, 'done') else result.get('done', False)
+            obs = result.observation
+            reward = result.reward
+            done = result.done
             error = obs.get("metadata", {}).get("error") if isinstance(obs.get("metadata"), dict) else None
 
             rewards.append(reward)
             steps_taken = step
 
-            action_str = f"park({action['vehicle_id']},{action['row']},{action['slot']})"
+            action_str = f"park({action_dict['vehicle_id']},{action_dict['row']},{action_dict['slot']})"
             log_step(step=step, action=action_str, reward=reward, done=done, error=error)
 
             if done:
@@ -248,15 +297,7 @@ async def run_task(client: OpenAI, env, task_id: str, seed: int) -> Dict[str, An
 
 async def main() -> None:
     client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
-
-    # Import environment
-    try:
-        from openenv import CollegParkEnv
-        env = await CollegParkEnv.from_docker_image(IMAGE_NAME)
-    except ImportError:
-        # Fallback to HTTP client mode
-        from client import CollegeParkClient
-        env = CollegeParkClient()
+    env = await CollegeParkEnv.from_docker_image(IMAGE_NAME)
 
     results = []
     
@@ -266,7 +307,6 @@ async def main() -> None:
             result = await run_task(client, env, task_id, seed)
             results.append(result)
         except Exception as e:
-            print(f"[DEBUG] Task {task_id} failed: {e}", flush=True)
             log_end(success=False, steps=0, score=0.0, rewards=[])
             results.append({
                 "task_id": task_id,
@@ -278,10 +318,9 @@ async def main() -> None:
 
     # Cleanup
     try:
-        if hasattr(env, 'close'):
-            await env.close()
-    except Exception as e:
-        print(f"[DEBUG] env.close() error: {e}", flush=True)
+        await env.close()
+    except Exception:
+        pass
 
     # Final summary
     total_score = sum(r['score'] for r in results)
