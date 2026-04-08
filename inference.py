@@ -269,18 +269,23 @@ async def run_task(client: OpenAI, env: CollegeParkEnv, task_id: str, seed: int)
             if done:
                 break
 
-        # Calculate score
+        # Calculate score - must be strictly in (0, 1) open interval
+        SCORE_MIN = 0.001
+        SCORE_MAX = 0.999
+        
         reshuffles = obs.get("reshuffles_so_far", 0)
         departures = obs.get("departed_count", 0)
         
         if departures > 0:
             if task_id == "hard":
-                score = max(0.0, min(1.0, 1.0 - (1.5 * reshuffles / departures)))
+                score = 1.0 - (1.5 * reshuffles / departures)
             else:
-                score = max(0.0, min(1.0, 1.0 - (reshuffles / departures)))
+                score = 1.0 - (reshuffles / departures)
         else:
-            score = 1.0 if reshuffles == 0 else 0.5
+            score = SCORE_MAX if reshuffles == 0 else 0.5
         
+        # Clamp to strictly (0, 1)
+        score = max(SCORE_MIN, min(SCORE_MAX, score))
         success = score >= SUCCESS_SCORE_THRESHOLD
 
     finally:

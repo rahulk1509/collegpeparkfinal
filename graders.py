@@ -9,9 +9,20 @@ Grading functions for the CollegePark Parking Environment.
 
 Computes scores based on parking efficiency, specifically minimizing
 the number of vehicle reshuffles required during departures.
+
+NOTE: Scores must be strictly between 0 and 1 (exclusive), i.e., in (0, 1).
 """
 
 from typing import Dict, Any
+
+# Epsilon to ensure scores are strictly in (0, 1) open interval
+SCORE_MIN = 0.001
+SCORE_MAX = 0.999
+
+
+def _clamp_score(score: float) -> float:
+    """Clamp score to strictly (0, 1) open interval."""
+    return round(max(SCORE_MIN, min(SCORE_MAX, score)), 4)
 
 
 def grade_easy(reshuffles: int, departures: int) -> float:
@@ -24,13 +35,13 @@ def grade_easy(reshuffles: int, departures: int) -> float:
         departures: Total vehicle departures
         
     Returns:
-        Score in range [0.0, 1.0], rounded to 4 decimals
+        Score in range (0, 1), strictly exclusive
     """
     if departures == 0:
-        return 1.0  # Perfect score if no departures yet
+        return SCORE_MAX  # Near-perfect score if no departures yet
     
     score = 1.0 - (reshuffles / departures)
-    return round(max(0.0, min(1.0, score)), 4)
+    return _clamp_score(score)
 
 
 def grade_medium(reshuffles: int, departures: int) -> float:
@@ -43,13 +54,13 @@ def grade_medium(reshuffles: int, departures: int) -> float:
         departures: Total vehicle departures
         
     Returns:
-        Score in range [0.0, 1.0], rounded to 4 decimals
+        Score in range (0, 1), strictly exclusive
     """
     if departures == 0:
-        return 1.0
+        return SCORE_MAX
     
     score = 1.0 - (reshuffles / departures)
-    return round(max(0.0, min(1.0, score)), 4)
+    return _clamp_score(score)
 
 
 def grade_hard(reshuffles: int, departures: int) -> float:
@@ -64,13 +75,13 @@ def grade_hard(reshuffles: int, departures: int) -> float:
         departures: Total vehicle departures
         
     Returns:
-        Score in range [0.0, 1.0], rounded to 4 decimals
+        Score in range (0, 1), strictly exclusive
     """
     if departures == 0:
-        return 1.0
+        return SCORE_MAX
     
     score = 1.0 - (1.5 * reshuffles / departures)
-    return round(max(0.0, min(1.0, score)), 4)
+    return _clamp_score(score)
 
 
 # Grader registry
