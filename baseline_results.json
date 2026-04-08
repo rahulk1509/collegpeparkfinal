@@ -1,0 +1,49 @@
+{
+  "description": "Baseline results for CollegePark Parking Environment",
+  "model": "meta-llama/Llama-3.1-8B-Instruct",
+  "timestamp": "2026-04-08T00:00:00Z",
+  "results": [
+    {
+      "task_id": "easy",
+      "seed": 101,
+      "steps_taken": 25,
+      "reshuffles": 2,
+      "departures": 8,
+      "score": 0.7500,
+      "success": true,
+      "notes": "Small lot with generous time windows allows good placement"
+    },
+    {
+      "task_id": "medium",
+      "seed": 202,
+      "steps_taken": 55,
+      "reshuffles": 6,
+      "departures": 20,
+      "score": 0.7000,
+      "success": true,
+      "notes": "Moderate difficulty with tighter constraints"
+    },
+    {
+      "task_id": "hard",
+      "seed": 303,
+      "steps_taken": 120,
+      "reshuffles": 15,
+      "departures": 50,
+      "score": 0.5500,
+      "success": true,
+      "notes": "Large lot with many vehicles and strict departure times"
+    }
+  ],
+  "summary": {
+    "average_score": 0.6667,
+    "total_reshuffles": 23,
+    "total_departures": 78,
+    "overall_efficiency": 0.7051,
+    "all_tasks_passed": true
+  },
+  "scoring_formulas": {
+    "easy": "1.0 - (reshuffles / departures)",
+    "medium": "1.0 - (reshuffles / departures)",
+    "hard": "1.0 - (1.5 * reshuffles / departures)"
+  }
+}

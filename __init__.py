@@ -4,12 +4,24 @@
 # This source code is licensed under the BSD-style license found in the
 # LICENSE file in the root directory of this source tree.
 
-"""Collegpeparkfinal Environment."""
+"""CollegePark Parking Environment."""
 
-from .client import CollegpeparkfinalEnv
-from .models import CollegpeparkfinalAction, CollegpeparkfinalObservation
+from .client import CollegeParkEnv, CollegpeparkfinalEnv
+from .models import (
+    CollegeParkAction,
+    CollegeParkObservation,
+    CollegeParkState,
+    CollegpeparkfinalAction,
+    CollegpeparkfinalObservation,
+)
 
 __all__ = [
+    # New names
+    "CollegeParkAction",
+    "CollegeParkObservation",
+    "CollegeParkState",
+    "CollegeParkEnv",
+    # Backward compatibility
     "CollegpeparkfinalAction",
     "CollegpeparkfinalObservation",
     "CollegpeparkfinalEnv",

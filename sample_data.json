@@ -1,0 +1,573 @@
+{
+  "easy": {
+    "task_config": {
+      "task_id": "easy",
+      "rows": 3,
+      "slots_per_row": 4,
+      "num_vehicles": 8,
+      "max_steps": 50,
+      "departure_time_range": [
+        10,
+        30
+      ],
+      "description": "Small lot (3x4), 8 vehicles, generous departure windows"
+    },
+    "initial_lot": [
+      [
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "vehicle_queue": [
+      {
+        "vehicle_id": "V004",
+        "departure_time": 19
+      },
+      {
+        "vehicle_id": "V008",
+        "departure_time": 25
+      },
+      {
+        "vehicle_id": "V003",
+        "departure_time": 12
+      },
+      {
+        "vehicle_id": "V001",
+        "departure_time": 12
+      },
+      {
+        "vehicle_id": "V005",
+        "departure_time": 19
+      },
+      {
+        "vehicle_id": "V007",
+        "departure_time": 23
+      },
+      {
+        "vehicle_id": "V006",
+        "departure_time": 20
+      },
+      {
+        "vehicle_id": "V002",
+        "departure_time": 10
+      }
+    ],
+    "sample_actions": [
+      {
+        "vehicle_id": "V004",
+        "row": 0,
+        "slot": 0
+      },
+      {
+        "vehicle_id": "V008",
+        "row": 0,
+        "slot": 1
+      },
+      {
+        "vehicle_id": "V003",
+        "row": 1,
+        "slot": 0
+      }
+    ]
+  },
+  "medium": {
+    "task_config": {
+      "task_id": "medium",
+      "rows": 5,
+      "slots_per_row": 6,
+      "num_vehicles": 20,
+      "max_steps": 100,
+      "departure_time_range": [
+        8,
+        25
+      ],
+      "description": "Medium lot (5x6), 20 vehicles, moderate time constraints"
+    },
+    "initial_lot": [
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "vehicle_queue": [
+      {
+        "vehicle_id": "V012",
+        "departure_time": 19
+      },
+      {
+        "vehicle_id": "V015",
+        "departure_time": 20
+      },
+      {
+        "vehicle_id": "V011",
+        "departure_time": 18
+      },
+      {
+        "vehicle_id": "V009",
+        "departure_time": 16
+      },
+      {
+        "vehicle_id": "V016",
+        "departure_time": 20
+      },
+      {
+        "vehicle_id": "V002",
+        "departure_time": 8
+      },
+      {
+        "vehicle_id": "V013",
+        "departure_time": 19
+      },
+      {
+        "vehicle_id": "V006",
+        "departure_time": 10
+      },
+      {
+        "vehicle_id": "V019",
+        "departure_time": 20
+      },
+      {
+        "vehicle_id": "V003",
+        "departure_time": 8
+      },
+      {
+        "vehicle_id": "V018",
+        "departure_time": 19
+      },
+      {
+        "vehicle_id": "V005",
+        "departure_time": 10
+      },
+      {
+        "vehicle_id": "V010",
+        "departure_time": 12
+      },
+      {
+        "vehicle_id": "V020",
+        "departure_time": 22
+      },
+      {
+        "vehicle_id": "V004",
+        "departure_time": 12
+      },
+      {
+        "vehicle_id": "V014",
+        "departure_time": 16
+      },
+      {
+        "vehicle_id": "V007",
+        "departure_time": 11
+      },
+      {
+        "vehicle_id": "V001",
+        "departure_time": 10
+      },
+      {
+        "vehicle_id": "V017",
+        "departure_time": 18
+      },
+      {
+        "vehicle_id": "V008",
+        "departure_time": 11
+      }
+    ],
+    "sample_actions": [
+      {
+        "vehicle_id": "V012",
+        "row": 0,
+        "slot": 0
+      },
+      {
+        "vehicle_id": "V015",
+        "row": 0,
+        "slot": 1
+      },
+      {
+        "vehicle_id": "V011",
+        "row": 1,
+        "slot": 0
+      }
+    ]
+  },
+  "hard": {
+    "task_config": {
+      "task_id": "hard",
+      "rows": 8,
+      "slots_per_row": 10,
+      "num_vehicles": 50,
+      "max_steps": 200,
+      "departure_time_range": [
+        5,
+        20
+      ],
+      "description": "Large lot (8x10), 50 vehicles, tight departure times"
+    },
+    "initial_lot": [
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ],
+      [
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        ""
+      ]
+    ],
+    "vehicle_queue": [
+      {
+        "vehicle_id": "V016",
+        "departure_time": 9
+      },
+      {
+        "vehicle_id": "V001",
+        "departure_time": 7
+      },
+      {
+        "vehicle_id": "V014",
+        "departure_time": 5
+      },
+      {
+        "vehicle_id": "V046",
+        "departure_time": 16
+      },
+      {
+        "vehicle_id": "V037",
+        "departure_time": 18
+      },
+      {
+        "vehicle_id": "V026",
+        "departure_time": 10
+      },
+      {
+        "vehicle_id": "V028",
+        "departure_time": 15
+      },
+      {
+        "vehicle_id": "V029",
+        "departure_time": 15
+      },
+      {
+        "vehicle_id": "V027",
+        "departure_time": 14
+      },
+      {
+        "vehicle_id": "V002",
+        "departure_time": 5
+      },
+      {
+        "vehicle_id": "V041",
+        "departure_time": 15
+      },
+      {
+        "vehicle_id": "V031",
+        "departure_time": 14
+      },
+      {
+        "vehicle_id": "V044",
+        "departure_time": 16
+      },
+      {
+        "vehicle_id": "V033",
+        "departure_time": 14
+      },
+      {
+        "vehicle_id": "V011",
+        "departure_time": 10
+      },
+      {
+        "vehicle_id": "V048",
+        "departure_time": 20
+      },
+      {
+        "vehicle_id": "V018",
+        "departure_time": 7
+      },
+      {
+        "vehicle_id": "V020",
+        "departure_time": 8
+      },
+      {
+        "vehicle_id": "V038",
+        "departure_time": 13
+      },
+      {
+        "vehicle_id": "V012",
+        "departure_time": 10
+      },
+      {
+        "vehicle_id": "V021",
+        "departure_time": 9
+      },
+      {
+        "vehicle_id": "V015",
+        "departure_time": 10
+      },
+      {
+        "vehicle_id": "V009",
+        "departure_time": 9
+      },
+      {
+        "vehicle_id": "V034",
+        "departure_time": 15
+      },
+      {
+        "vehicle_id": "V004",
+        "departure_time": 7
+      },
+      {
+        "vehicle_id": "V042",
+        "departure_time": 19
+      },
+      {
+        "vehicle_id": "V032",
+        "departure_time": 12
+      },
+      {
+        "vehicle_id": "V010",
+        "departure_time": 5
+      },
+      {
+        "vehicle_id": "V045",
+        "departure_time": 17
+      },
+      {
+        "vehicle_id": "V040",
+        "departure_time": 19
+      },
+      {
+        "vehicle_id": "V022",
+        "departure_time": 12
+      },
+      {
+        "vehicle_id": "V043",
+        "departure_time": 17
+      },
+      {
+        "vehicle_id": "V005",
+        "departure_time": 5
+      },
+      {
+        "vehicle_id": "V013",
+        "departure_time": 9
+      },
+      {
+        "vehicle_id": "V024",
+        "departure_time": 8
+      },
+      {
+        "vehicle_id": "V019",
+        "departure_time": 7
+      },
+      {
+        "vehicle_id": "V036",
+        "departure_time": 18
+      },
+      {
+        "vehicle_id": "V050",
+        "departure_time": 16
+      },
+      {
+        "vehicle_id": "V049",
+        "departure_time": 18
+      },
+      {
+        "vehicle_id": "V008",
+        "departure_time": 5
+      },
+      {
+        "vehicle_id": "V035",
+        "departure_time": 14
+      },
+      {
+        "vehicle_id": "V030",
+        "departure_time": 14
+      },
+      {
+        "vehicle_id": "V003",
+        "departure_time": 5
+      },
+      {
+        "vehicle_id": "V017",
+        "departure_time": 6
+      },
+      {
+        "vehicle_id": "V039",
+        "departure_time": 19
+      },
+      {
+        "vehicle_id": "V047",
+        "departure_time": 16
+      },
+      {
+        "vehicle_id": "V023",
+        "departure_time": 12
+      },
+      {
+        "vehicle_id": "V007",
+        "departure_time": 5
+      },
+      {
+        "vehicle_id": "V025",
+        "departure_time": 13
+      },
+      {
+        "vehicle_id": "V006",
+        "departure_time": 5
+      }
+    ],
+    "sample_actions": [
+      {
+        "vehicle_id": "V016",
+        "row": 0,
+        "slot": 0
+      },
+      {
+        "vehicle_id": "V001",
+        "row": 0,
+        "slot": 1
+      },
+      {
+        "vehicle_id": "V014",
+        "row": 1,
+        "slot": 0
+      }
+    ]
+  }
+}

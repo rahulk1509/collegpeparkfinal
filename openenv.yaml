@@ -1,7 +1,8 @@
 spec_version: 1
-name: collegpeparkfinal
+name: collegpark
 type: space
 runtime: fastapi
 app: server.app:app
-port: 8000
-
+port: 7860
+dockerfile: Dockerfile
+description: Parking lot vehicle assignment optimization environment

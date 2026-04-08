@@ -1,255 +1,254 @@
 ---
-title: Collegpeparkfinal Environment Server
-emoji: 🏈
-colorFrom: green
-colorTo: blue
+title: CollegePark-v1
+emoji: 🅿
+colorFrom: blue
+colorTo: green
 sdk: docker
 pinned: false
-app_port: 8000
-base_path: /web
-tags:
-  - openenv
+app_port: 7860
 ---
 
-# Collegpeparkfinal Environment
+# CollegePark Parking Environment
 
-A simple test environment that echoes back messages. Perfect for testing the env APIs as well as demonstrating environment usage patterns.
+A reinforcement learning environment for **parking lot vehicle assignment optimization**. The agent's goal is to efficiently assign arriving vehicles to parking spots while minimizing reshuffles when vehicles need to depart.
+
+## Problem Description
+
+- **Parking Lot**: 2D grid of rows x slots per row
+- **Slot 0** in each row is closest to the exit
+- **Vehicles** arrive with estimated departure times
+- **Challenge**: When a vehicle departs, all vehicles blocking its path to the exit must be reshuffled
+- **Goal**: Park vehicles to minimize total reshuffles
+
+### Optimal Strategy
+
+- Park vehicles with **earlier departure times** closer to the exit (lower slot numbers)
+- Park vehicles with **later departure times** deeper in rows (higher slot numbers)
+- Never place an early-departing vehicle behind a late-departing one
 
 ## Quick Start
 
-The simplest way to use the Collegpeparkfinal environment is through the `CollegpeparkfinalEnv` class:
+### Using the Client
 
 ```python
-from collegpeparkfinal import CollegpeparkfinalAction, CollegpeparkfinalEnv
+from collegpark import CollegeParkAction, CollegeParkEnv
 
-try:
-    # Create environment from Docker image
-    collegpeparkfinalenv = CollegpeparkfinalEnv.from_docker_image("collegpeparkfinal-env:latest")
-
-    # Reset
-    result = collegpeparkfinalenv.reset()
-    print(f"Reset: {result.observation.echoed_message}")
-
-    # Send multiple messages
-    messages = ["Hello, World!", "Testing echo", "Final message"]
-
-    for msg in messages:
-        result = collegpeparkfinalenv.step(CollegpeparkfinalAction(message=msg))
-        print(f"Sent: '{msg}'")
-        print(f"  → Echoed: '{result.observation.echoed_message}'")
-        print(f"  → Length: {result.observation.message_length}")
-        print(f"  → Reward: {result.reward}")
-
-finally:
-    # Always clean up
-    collegpeparkfinalenv.close()
+# Connect to running server
+with CollegeParkEnv(base_url="http://localhost:7860") as env:
+    # Reset with easy task
+    result = env.reset(task_id="easy", seed=42)
+    print(f"Queue: {len(result.observation.queue)} vehicles waiting")
+    
+    # Park vehicles from queue
+    for vehicle in result.observation.queue:
+        vid = vehicle["vehicle_id"]
+        dep_time = vehicle["departure_time"]
+        
+        # Simple strategy: park in first available slot
+        for row_idx, row in enumerate(result.observation.lot):
+            for slot_idx, cell in enumerate(row):
+                if cell is None or cell == "":
+                    result = env.step(CollegeParkAction(
+                        vehicle_id=vid,
+                        row=row_idx,
+                        slot=slot_idx
+                    ))
+                    break
+            if result.done:
+                break
+    
+    print(f"Final score: {result.reward}")
 ```
 
-That's it! The `CollegpeparkfinalEnv.from_docker_image()` method handles:
-- Starting the Docker container
-- Waiting for the server to be ready
-- Connecting to the environment
-- Container cleanup when you call `close()`
-
-## Building the Docker Image
-
-Before using the environment, you need to build the Docker image:
+### Running the Server
 
 ```bash
-# From project root
-docker build -t collegpeparkfinal-env:latest -f server/Dockerfile .
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the server
+python run.py --port 7860
+
+# Or with uvicorn directly
+uvicorn server.app:app --host 0.0.0.0 --port 7860
 ```
 
-## Deploying to Hugging Face Spaces
-
-You can easily deploy your OpenEnv environment to Hugging Face Spaces using the `openenv push` command:
+### Using Docker
 
 ```bash
-# From the environment directory (where openenv.yaml is located)
-openenv push
+# Build the image
+docker build -t collegpark-env:latest .
 
-# Or specify options
-openenv push --namespace my-org --private
+# Run the container
+docker run -p 7860:7860 collegpark-env:latest
 ```
 
-The `openenv push` command will:
-1. Validate that the directory is an OpenEnv environment (checks for `openenv.yaml`)
-2. Prepare a custom build for Hugging Face Docker space (enables web interface)
-3. Upload to Hugging Face (ensuring you're logged in)
+## Task Difficulties
 
-### Prerequisites
+| Task | Lot Size | Vehicles | Max Steps | Departure Range | Description |
+|------|----------|----------|-----------|-----------------|-------------|
+| **easy** | 3x4 | 8 | 50 | 10-30 | Small lot, generous time windows |
+| **medium** | 5x6 | 20 | 100 | 8-25 | Medium lot, moderate constraints |
+| **hard** | 8x10 | 50 | 200 | 5-20 | Large lot, tight departure times |
 
-- Authenticate with Hugging Face: The command will prompt for login if not already authenticated
+## API Endpoints
 
-### Options
+### POST /reset
 
-- `--directory`, `-d`: Directory containing the OpenEnv environment (defaults to current directory)
-- `--repo-id`, `-r`: Repository ID in format 'username/repo-name' (defaults to 'username/env-name' from openenv.yaml)
-- `--base-image`, `-b`: Base Docker image to use (overrides Dockerfile FROM)
-- `--private`: Deploy the space as private (default: public)
+Initialize a new episode.
 
-### Examples
+**Request:**
+```json
+{
+  "task_id": "easy",
+  "seed": 42
+}
+```
+
+**Response:**
+```json
+{
+  "episode_id": "uuid",
+  "observation": {
+    "lot": [["", "", "", ""], ["", "", "", ""], ["", "", "", ""]],
+    "queue": [
+      {"vehicle_id": "V001", "departure_time": 12},
+      {"vehicle_id": "V002", "departure_time": 18}
+    ],
+    "reshuffles_so_far": 0,
+    "step_count": 0,
+    "task_id": "easy",
+    "max_steps": 50,
+    "pending_count": 8,
+    "departed_count": 0,
+    "parked_count": 0
+  },
+  "reward": 0.0,
+  "done": false,
+  "available_tasks": ["easy", "medium", "hard"],
+  "info": {"episode_id": "uuid"}
+}
+```
+
+### POST /step
+
+Execute a parking action.
+
+**Request:**
+```json
+{
+  "vehicle_id": "V001",
+  "row": 0,
+  "slot": 2
+}
+```
+
+**Response:**
+```json
+{
+  "observation": {
+    "lot": [["", "", "V001", ""], ["", "", "", ""], ["", "", "", ""]],
+    "queue": [{"vehicle_id": "V002", "departure_time": 18}],
+    "reshuffles_so_far": 0,
+    "step_count": 1,
+    "pending_count": 7,
+    "parked_count": 1,
+    "departed_count": 0
+  },
+  "reward": 0.5,
+  "done": false
+}
+```
+
+### GET /state
+
+Get current environment state.
+
+### GET /health
+
+Health check endpoint.
+
+## Scoring
+
+Scores are calculated based on reshuffle efficiency:
+
+| Task | Formula | Score Range |
+|------|---------|-------------|
+| **easy** | `1.0 - (reshuffles / departures)` | [0.0, 1.0] |
+| **medium** | `1.0 - (reshuffles / departures)` | [0.0, 1.0] |
+| **hard** | `1.0 - (1.5 * reshuffles / departures)` | [0.0, 1.0] |
+
+A score of **1.0** means zero reshuffles (perfect). A score below **0.5** is considered failure.
+
+## Inference Agent
+
+The included `inference.py` uses an LLM to make parking decisions:
 
 ```bash
-# Push to your personal namespace (defaults to username/env-name from openenv.yaml)
-openenv push
+# Set environment variables
+export HF_TOKEN="your-huggingface-token"
+export ENV_URL="http://localhost:7860"
+export MODEL_NAME="meta-llama/Llama-3.1-8B-Instruct"
 
-# Push to a specific repository
-openenv push --repo-id my-org/my-env
-
-# Push with a custom base image
-openenv push --base-image ghcr.io/meta-pytorch/openenv-base:latest
-
-# Push as a private space
-openenv push --private
-
-# Combine options
-openenv push --repo-id my-org/my-env --base-image custom-base:latest --private
+# Run inference
+python inference.py
 ```
 
-After deployment, your space will be available at:
-`https://huggingface.co/spaces/<repo-id>`
-
-The deployed space includes:
-- **Web Interface** at `/web` - Interactive UI for exploring the environment
-- **API Documentation** at `/docs` - Full OpenAPI/Swagger interface
-- **Health Check** at `/health` - Container health monitoring
-- **WebSocket** at `/ws` - Persistent session endpoint for low-latency interactions
-
-## Environment Details
-
-### Action
-**CollegpeparkfinalAction**: Contains a single field
-- `message` (str) - The message to echo back
-
-### Observation
-**CollegpeparkfinalObservation**: Contains the echo response and metadata
-- `echoed_message` (str) - The message echoed back
-- `message_length` (int) - Length of the message
-- `reward` (float) - Reward based on message length (length × 0.1)
-- `done` (bool) - Always False for echo environment
-- `metadata` (dict) - Additional info like step count
-
-### Reward
-The reward is calculated as: `message_length × 0.1`
-- "Hi" → reward: 0.2
-- "Hello, World!" → reward: 1.3
-- Empty message → reward: 0.0
-
-## Advanced Usage
-
-### Connecting to an Existing Server
-
-If you already have a Collegpeparkfinal environment server running, you can connect directly:
-
-```python
-from collegpeparkfinal import CollegpeparkfinalEnv
-
-# Connect to existing server
-collegpeparkfinalenv = CollegpeparkfinalEnv(base_url="<ENV_HTTP_URL_HERE>")
-
-# Use as normal
-result = collegpeparkfinalenv.reset()
-result = collegpeparkfinalenv.step(CollegpeparkfinalAction(message="Hello!"))
+**Output Format:**
 ```
+[START]
+task_id: easy
+model: meta-llama/Llama-3.1-8B-Instruct
+seed: 101
 
-Note: When connecting to an existing server, `collegpeparkfinalenv.close()` will NOT stop the server.
+[STEP]
+step: 1
+action: park V001 -> row 0, slot 2
+reward: 0.85
+done: false
+error: null
 
-### Using the Context Manager
-
-The client supports context manager usage for automatic connection management:
-
-```python
-from collegpeparkfinal import CollegpeparkfinalAction, CollegpeparkfinalEnv
-
-# Connect with context manager (auto-connects and closes)
-with CollegpeparkfinalEnv(base_url="http://localhost:8000") as env:
-    result = env.reset()
-    print(f"Reset: {result.observation.echoed_message}")
-    # Multiple steps with low latency
-    for msg in ["Hello", "World", "!"]:
-        result = env.step(CollegpeparkfinalAction(message=msg))
-        print(f"Echoed: {result.observation.echoed_message}")
-```
-
-The client uses WebSocket connections for:
-- **Lower latency**: No HTTP connection overhead per request
-- **Persistent session**: Server maintains your environment state
-- **Efficient for episodes**: Better for many sequential steps
-
-### Concurrent WebSocket Sessions
-
-The server supports multiple concurrent WebSocket connections. To enable this,
-modify `server/app.py` to use factory mode:
-
-```python
-# In server/app.py - use factory mode for concurrent sessions
-app = create_app(
-    CollegpeparkfinalEnvironment,  # Pass class, not instance
-    CollegpeparkfinalAction,
-    CollegpeparkfinalObservation,
-    max_concurrent_envs=4,  # Allow 4 concurrent sessions
-)
-```
-
-Then multiple clients can connect simultaneously:
-
-```python
-from collegpeparkfinal import CollegpeparkfinalAction, CollegpeparkfinalEnv
-from concurrent.futures import ThreadPoolExecutor
-
-def run_episode(client_id: int):
-    with CollegpeparkfinalEnv(base_url="http://localhost:8000") as env:
-        result = env.reset()
-        for i in range(10):
-            result = env.step(CollegpeparkfinalAction(message=f"Client {client_id}, step {i}"))
-        return client_id, result.observation.message_length
-
-# Run 4 episodes concurrently
-with ThreadPoolExecutor(max_workers=4) as executor:
-    results = list(executor.map(run_episode, range(4)))
-```
-
-## Development & Testing
-
-### Direct Environment Testing
-
-Test the environment logic directly without starting the HTTP server:
-
-```bash
-# From the server directory
-python3 server/collegpeparkfinal_environment.py
-```
-
-This verifies that:
-- Environment resets correctly
-- Step executes actions properly
-- State tracking works
-- Rewards are calculated correctly
-
-### Running Locally
-
-Run the server locally for development:
-
-```bash
-uvicorn server.app:app --reload
+[END]
+task_id: easy
+steps_taken: 25
+final_reward: 0.85
+total_reward: 15.30
+episode_done: true
+score: 0.8750
+success: true
 ```
 
 ## Project Structure
 
 ```
-collegpeparkfinal/
-├── .dockerignore         # Docker build exclusions
-├── __init__.py            # Module exports
-├── README.md              # This file
-├── openenv.yaml           # OpenEnv manifest
-├── pyproject.toml         # Project metadata and dependencies
-├── uv.lock                # Locked dependencies (generated)
-├── client.py              # CollegpeparkfinalEnv client
-├── models.py              # Action and Observation models
+collegpark/
+├── models.py                  # Pydantic models (Action, Observation, State)
+├── tasks.py                   # Task configurations (easy, medium, hard)
+├── graders.py                 # Scoring functions
+├── client.py                  # HTTP client for environment
+├── inference.py               # LLM-based parking agent
+├── run.py                     # Server entry point
+├── requirements.txt           # Python dependencies
+├── Dockerfile                 # Container definition
+├── openenv.yaml               # OpenEnv manifest
+├── pyproject.toml             # Project metadata
 └── server/
-    ├── __init__.py        # Server module exports
+    ├── __init__.py
+    ├── app.py                 # FastAPI application
     ├── collegpeparkfinal_environment.py  # Core environment logic
-    ├── app.py             # FastAPI application (HTTP + WebSocket endpoints)
-    └── Dockerfile         # Container image definition
+    ├── Dockerfile             # Alternative Dockerfile
+    └── requirements.txt       # Server-specific dependencies
 ```
+
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `ENV_URL` | `http://localhost:7860` | Parking server URL |
+| `API_BASE_URL` | `https://router.huggingface.co/v1` | LLM API endpoint |
+| `MODEL_NAME` | `meta-llama/Llama-3.1-8B-Instruct` | LLM model for inference |
+| `HF_TOKEN` | - | Hugging Face API token |
+
+## License
+
+BSD-style license. See LICENSE file for details.

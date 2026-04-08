@@ -1,0 +1,17 @@
+# CollegePark Parking Environment Dependencies
+
+# OpenEnv framework (required for deployment)
+openenv-core>=0.2.0
+
+# Web framework
+fastapi>=0.115.0
+uvicorn>=0.24.0
+
+# Data validation
+pydantic>=2.0.0
+
+# HTTP client (for inference agent)
+requests>=2.28.0
+
+# OpenAI API (for inference agent)
+openai>=1.0.0
